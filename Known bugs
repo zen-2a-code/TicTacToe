@@ -1,0 +1,2 @@
+There is still a known bug: if the user inputs 121 or any other number that has 3 digits but matches the available moves rule (<3) for the first and last digits, the index goes out of range because the split operator doesn't find anything to split on (" ").
+ This will be fixed later if I have the time
