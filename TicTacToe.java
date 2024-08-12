@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.util.*;
 
 public class TicTacToe {
@@ -28,6 +29,11 @@ public class TicTacToe {
 
         System.out.print("Please select your character (should be only 1 symbol e.g - X; 0: ");
         String player1Symbol = this.scanner.nextLine();
+
+        if (player1Symbol.length() > 1) {
+            throw new IllegalArgumentException("Invalid input: The character should be only 1 character");
+        }
+
         this.player1 = new Player(player1Name, player1Symbol.trim(), true);
 
         System.out.print("Player 2 please enter your name: ");
@@ -35,13 +41,17 @@ public class TicTacToe {
 
         System.out.print("Please select your character (should be only 1 symbol e.g - X; 0: ");
         String player2Symbol = this.scanner.nextLine();
+        checkStringLength(player2Symbol, 1);
+        this.player2 = new Player(player2Name, player2Symbol.trim(), true);
 
-        if (player1Symbol.length() > 1 || player2Symbol.length() > 1) {
-            throw new IllegalArgumentException("Invalid input: The character should be only 1 character");
+        if (Player.arePlayerCharactersMatching(player1, player2)) {
+            throw new InputMismatchException("Both players have the same character. The game is closing.");
         }
-        this.player2 = new Player(player2Name, player2Symbol.trim(), true)
 
-        ;
+        if (Player.arePlayerNamesMatching(player1, player2)) {
+            throw new InputMismatchException("Both players have the same name. Make sure to include at least one" +
+                    " different character to distinguish between them. The game is closing.");
+        }
         System.out.println();
     }
 
@@ -67,18 +77,17 @@ public class TicTacToe {
     }
 
     private void makeAMove(Player currentPlayer) {
-        String playerInput = this.scanner.nextLine();
-        String[] splitInput = playerInput.split(" ");
-        int row = Integer.parseInt(splitInput[0]);
-        int column = Integer.parseInt(splitInput[1]);
+        int[] playerInput = promptPlayerForValidMove();
+        int row = playerInput[0];
+        int column = playerInput[1];
 
         while (!isMoveAvaliable(row, column)) {
             System.out.println("That cell is occupied!");
             System.out.println("Please enter the row THEN the column, each for 0, 1 or 2, separated by single space");
-            playerInput = this.scanner.nextLine();
-            splitInput = playerInput.split(" ");
-            row = Integer.parseInt(splitInput[0]);
-            column = Integer.parseInt(splitInput[1]);
+            playerInput = promptPlayerForValidMove();
+
+            row = playerInput[0];
+            column = playerInput[1];
         }
 
         this.turnsCounter++;
@@ -186,6 +195,10 @@ public class TicTacToe {
             case "N":
                 this.gameIsRunning = false;
                 break;
+            default:
+                System.out.println("Invalid Input. The game is stopping");
+                this.gameIsRunning = false;
+                break;
         }
     }
 
@@ -206,6 +219,56 @@ public class TicTacToe {
         }
     }
 
+    /**
+     * This method is used to validated user Input and raises exception if the length of the string is longer than
+     * expected
+     *
+     * @param str:           String
+     * @param expectedLength int
+     */
+    private void checkStringLength(String str, int expectedLength) {
+        if (str.length() > expectedLength) {
+            throw new IllegalArgumentException("Invalid input: The character should be only " + expectedLength +
+                    " character/s.");
+        }
+    }
+
+    /**
+     * This is recursive method that insures that the player is entering a valid input of an integers and that the
+     * number is valid move on the game board
+     * number - (0, 1 ,2)
+     *
+     * @return int[] of the checked input  - At index 0 row, At index 1 column
+     */
+    private int[] promptPlayerForValidMove() {
+        String playerInput = scanner.nextLine().trim();
+
+        // ensuring the player entered valid Integers
+        try {
+            int row = Integer.parseInt(Character.toString(playerInput.charAt(0)));
+            int column = Integer.parseInt(Character.toString(playerInput.charAt(2)));
+
+            if ((row > 2 || row < 0) || (column > 2 || column < 0)) {
+                System.out.println("Make sure to input valid numbers e.g '0 1'.");
+                return promptPlayerForValidMove();
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Make sure to input valid numbers e.g '0 1'.");
+            return promptPlayerForValidMove();
+        }
+
+        // Ensuring the player have entered a valid string no longer than 3 characters.
+        // Excluding blank trailing and leading whitespaces.
+        if (playerInput.length() != 3) {
+            System.out.println("Please enter valid input e.g '0 1'.");
+            return promptPlayerForValidMove();
+        } else {
+            String[] splitInput = playerInput.split(" ");
+            int row = Integer.parseInt(splitInput[0]);
+            int column = Integer.parseInt(splitInput[1]);
+            return new int[]{row, column};
+        }
+    }
 
     private void newGame() {
         this.gameBoardArr = new String[3][3];
